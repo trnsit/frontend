@@ -3,10 +3,18 @@
 import { useState } from 'react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import Logo from '@/components/Logo';
+
+import apiRequest, { saveAccessToken } from '@/lib/api';
+
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,14 +23,37 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    setError(null);
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await apiRequest<TokenResponse>('/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password
+        })
+      });
+
+      saveAccessToken(response.access_token);
+
+      router.push('/profile');
+    }
+
+    catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid credentials. Please try again.')
+    }
+
+    finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -85,6 +116,12 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {error && (
+            <div className='p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600 font-medium'>
+              {error}
+            </div>
+          )}
 
           {/* THE SUBMIT BUTTON */}
           <button

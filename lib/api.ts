@@ -73,12 +73,6 @@ export default async function apiRequest<T>(endpoint: string, options: RequestIn
         headers
     });
 
-    if (response.status === 401) {
-        clearAccessToken();
-
-        throw new Error('Session got expired. Please log in again.');
-    }
-
     if (!response.ok) {
         let errorMsg = `Request failed: ${response.status}`;
 
@@ -90,10 +84,18 @@ export default async function apiRequest<T>(endpoint: string, options: RequestIn
                     ? errorData.detail
                     : JSON.stringify(errorData.detail);
             }
+        } catch {
+            // Ignore JSON parse errors
         }
 
-        catch {
-            // Ignore JSON parse errors
+        // If a 401 occurs, clear any stale token
+        if (response.status === 401) {
+            clearAccessToken();
+
+            // Only override the message if it wasn't an explicit login attempt
+            if (endpoint !== '/login' && !errorMsg.includes('Incorrect')) {
+                errorMsg = 'Session expired. Please log in again.';
+            }
         }
 
         throw new Error(errorMsg);

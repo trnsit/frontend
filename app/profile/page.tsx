@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { User, Mail, ShieldCheck, Fingerprint, Calendar, LogOut, ArrowLeft } from 'lucide-react';
 
 import Logo from '@/components/Logo';
+
+import { clearAccessToken } from '@/lib/api';
 
 interface UserInfo {
     id: string;
@@ -28,7 +29,8 @@ export default function Profile() {
     const router = useRouter();
 
     const handleSignOut = () => {
-        // Sign Out logic here
+        clearAccessToken();
+
         router.push('/login');
     };
 
